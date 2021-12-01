@@ -3,35 +3,38 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using LibCpp2IL;
+using LibCpp2IL.Metadata;
+using LibCpp2IL.Reflection;
 using LibCpp2IL.Wasm;
-using Mono.Cecil;
 
 namespace Cpp2IL.Core.Utils
 {
     public static class WasmUtils
     {
-        internal static readonly Dictionary<int, List<MethodDefinition>> MethodDefinitionIndices = new();
+        internal static readonly Dictionary<int, List<Il2CppMethodDefinition>> MethodDefinitionIndices = new();
         private static Regex DynCallRemappingRegex = new(@"Module\[\s*[""'](dynCall_[^""']+)[""']\s*\]\s*=\s*Module\[\s*[""']asm[""']\s*\]\[\s*[""']([^""']+)[""']\s*\]\s*\)\.apply", RegexOptions.Compiled);
 
-        public static string BuildSignature(MethodDefinition definition)
+        public static string BuildSignature(Il2CppMethodDefinition definition)
         {
             var instanceParam = definition.IsStatic ? "" : "i";
-            return $"{GetSignatureLetter(definition.ReturnType)}{instanceParam}{string.Join("", definition.Parameters.Select(p => p.ParameterType).Select(GetSignatureLetter))}i"; //Add an extra i on the end for the method info param
+            return $"{GetSignatureLetter(definition.ReturnType!)}{instanceParam}{string.Join("", definition.Parameters!.Select(p => p.Type).Select(GetSignatureLetter))}i"; //Add an extra i on the end for the method info param
         }
 
         private static char GetSignatureLetter(TypeReference typeReference) => GetSignatureLetter(typeReference.Resolve());
 
         private static char GetSignatureLetter(TypeDefinition typeDefinition)
         {
-            if (typeDefinition == TypeDefinitions.Void)
+            var typeDefinition = type.baseType ?? LibCpp2IlReflection.GetType("Int32", "System")!;
+            
+            if (typeDefinition.Name == "Void")
                 return 'v';
-            if (typeDefinition == TypeDefinitions.Int32)
+            if (typeDefinition.Name == "Int32")
                 return 'i';
-            if (typeDefinition == TypeDefinitions.Int64)
+            if (typeDefinition.Name == "Int64")
                 return 'j';
-            if (typeDefinition == TypeDefinitions.Single)
+            if (typeDefinition.Name == "Single")
                 return 'f';
-            if (typeDefinition == TypeDefinitions.Double)
+            if (typeDefinition.Name == "Double")
                 return 'd';
 
             return 'i'; //Everything else is passed as an int32
@@ -43,18 +46,18 @@ namespace Cpp2IL.Core.Utils
             return $"unnamed_function_{index}";
         }
 
-        public static WasmFunctionDefinition GetWasmDefinition(MethodDefinition definition)
+        public static WasmFunctionDefinition GetWasmDefinition(Il2CppMethodDefinition definition)
         {
             //First, we have to calculate the signature
             var signature = WasmUtils.BuildSignature(definition);
-            return ((WasmFile) LibCpp2IlMain.Binary!).GetFunctionFromIndexAndSignature(definition.AsUnmanaged().MethodPointer, signature);
+            return ((WasmFile) LibCpp2IlMain.Binary!).GetFunctionFromIndexAndSignature(definition.MethodPointer, signature);
         }
 
         private static void CalculateAllMethodDefinitionIndices()
         {
             foreach (var il2CppMethodDefinition in LibCpp2IlMain.TheMetadata!.methodDefs)
             {
-                var methodDefinition = il2CppMethodDefinition.AsManaged();
+                var methodDefinition = il2CppMethodDefinition;
 
                 try
                 {
@@ -73,7 +76,7 @@ namespace Cpp2IL.Core.Utils
             }
         }
 
-        public static List<MethodDefinition>? GetMethodDefinitionsAtIndex(int index)
+        public static List<Il2CppMethodDefinition>? GetMethodDefinitionsAtIndex(int index)
         {
             if(MethodDefinitionIndices.Count == 0)
                 CalculateAllMethodDefinitionIndices();
