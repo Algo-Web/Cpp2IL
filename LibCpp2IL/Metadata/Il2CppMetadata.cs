@@ -26,7 +26,7 @@ namespace LibCpp2IL.Metadata
         private Il2CppFieldDefaultValue[] fieldDefaultValues;
         private Il2CppParameterDefaultValue[] parameterDefaultValues;
         public Il2CppPropertyDefinition[] propertyDefs;
-        public Il2CppCustomAttributeTypeRange[] attributeTypeRanges; //Pre-29
+        public List<Il2CppCustomAttributeTypeRange> attributeTypeRanges;
         private Il2CppStringLiteral[] stringLiterals;
         public Il2CppMetadataUsageList[] metadataUsageLists;
         private Il2CppMetadataUsagePair[] metadataUsagePairs;
@@ -249,7 +249,7 @@ namespace LibCpp2IL.Metadata
                 //Removed in v29
                 LibLogger.Verbose("\tReading attribute types...");
                 start = DateTime.Now;
-                attributeTypeRanges = ReadMetadataClassArray<Il2CppCustomAttributeTypeRange>(metadataHeader.attributesInfoOffset, metadataHeader.attributesInfoCount);
+                attributeTypeRanges = ReadMetadataClassArray<Il2CppCustomAttributeTypeRange>(metadataHeader.attributesInfoOffset, metadataHeader.attributesInfoCount).ToList();
                 attributeTypes = ReadClassArrayAtRawAddr<int>(metadataHeader.attributeTypesOffset, metadataHeader.attributeTypesCount / 4);
                 LibLogger.VerboseNewline($"OK ({(DateTime.Now - start).TotalMilliseconds} ms)");
             }
@@ -362,40 +362,23 @@ namespace LibCpp2IL.Metadata
             return _cachedStrings[index];
         }
 
-        private ConcurrentDictionary<Il2CppImageDefinition, Il2CppCustomAttributeTypeRange[]> _typeRangesByAssembly = new ();
-
         public Il2CppCustomAttributeTypeRange? GetCustomAttributeData(Il2CppImageDefinition imageDef, int customAttributeIndex, uint token)
         {
             if (LibCpp2IlMain.MetadataVersion <= 24f)
                 return attributeTypeRanges[customAttributeIndex];
 
-            Il2CppCustomAttributeTypeRange[] range;
-            lock (_typeRangesByAssembly)
-            {
-                if (!_typeRangesByAssembly.ContainsKey(imageDef))
-                {
-                    range = attributeTypeRanges.SubArray(imageDef.customAttributeStart, (int) imageDef.customAttributeCount);
-                    _typeRangesByAssembly.TryAdd(imageDef, range);
-                }
-                else
-                {
-                    range = _typeRangesByAssembly[imageDef];
-                }
-            }
+            var target = new Il2CppCustomAttributeTypeRange {token = token};
 
-            foreach (var r in range)
-            {
-                if (r.token == token) return r;
-            }
+            var idx = attributeTypeRanges.BinarySearch(imageDef.customAttributeStart, (int) imageDef.customAttributeCount, target, new TokenComparer());
 
-            return null;
+            return idx < 0 ? null : attributeTypeRanges[idx];
         }
 
         public string GetStringLiteralFromIndex(uint index)
         {
             var stringLiteral = stringLiterals[index];
-            
-            return Encoding.UTF8.GetString(ReadByteArrayAtRawAddress(metadataHeader.stringLiteralDataOffset + stringLiteral.dataIndex, (int) stringLiteral.length));
+            Position = metadataHeader.stringLiteralDataOffset + stringLiteral.dataIndex;
+            return Encoding.UTF8.GetString(ReadBytes((int) stringLiteral.length));
         }
     }
 }
