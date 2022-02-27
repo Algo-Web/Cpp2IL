@@ -2,15 +2,14 @@ name: .NET Core - Release
 
 on:
   push:
-    branches: [ new-analysis ]
+    branches: [ new-analysis, development ]
   pull_request:
-    branches: [ new-analysis ]
+    branches: [ new-analysis, development ]
 
 jobs:
   release:
-
+    name: Build CI Artifacts
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.message, '[skip ci]') == false
     steps:
     - uses: actions/checkout@v2
     - name: Setup .NET Core
@@ -34,10 +33,6 @@ jobs:
     - name: Build - OSX x64
       working-directory: ./Cpp2IL/
       run: dotnet publish /p:Configuration=Release /p:TargetFramework=net6.0 --no-restore -r osx-x64
-    - name: Run Tests
-      run: |
-        dotnet build
-        dotnet test -v=n --no-build
     - name: Upload Common Lib Files
       uses: actions/upload-artifact@v2
       with:
@@ -63,18 +58,16 @@ jobs:
       with:
         name: Cpp2IL-Mac
         path: ./Cpp2IL/bin/Release/net6.0/osx-x64/publish/Cpp2IL
-    - name: Upload LibCpp2IL nuget package
-      uses: actions/upload-artifact@v2
-      with:
-          name: LibCpp2IL.nupkg
-          path: ./LibCpp2IL/bin/Release/Samboy063.LibCpp2IL*.nupkg
-    - name: Upload Cpp2IL.Core nuget package
-      uses: actions/upload-artifact@v2
-      with:
-        name: Cpp2IL.Core.nupkg
-        path: ./Cpp2IL.Core/bin/Release/Samboy063.Cpp2IL.Core*.nupkg
-    - name: Upload WasmDisassembler nuget package
-      uses: actions/upload-artifact@v2
-      with:
-        name: WasmDisassembler.nupkg
-        path: ./WasmDisassembler/bin/Release/Samboy063.WasmDisassembler*.nupkg
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.x
+      - name: Install dependencies
+        run: dotnet restore
+      - name: Run Tests
+        run: dotnet test
