@@ -179,6 +179,8 @@ namespace LibCpp2IL
 
                 LibLogger.InfoNewline($"Processed {i} OK ({(DateTime.Now - start).TotalMilliseconds:F0}ms)");
             }
+            
+            LibCpp2IlReflection.InitPrimitiveCache();
 
             return true;
         }

@@ -14,42 +14,42 @@ namespace LibCpp2IL
     {
         private static readonly Dictionary<int, string> TypeString = new Dictionary<int, string>
         {
-            { 1, "void" },
-            { 2, "bool" },
-            { 3, "char" },
-            { 4, "sbyte" },
-            { 5, "byte" },
-            { 6, "short" },
-            { 7, "ushort" },
-            { 8, "int" },
-            { 9, "uint" },
-            { 10, "long" },
-            { 11, "ulong" },
-            { 12, "float" },
-            { 13, "double" },
-            { 14, "string" },
-            { 22, "TypedReference" },
-            { 24, "IntPtr" },
-            { 25, "UIntPtr" },
-            { 28, "object" }
+            {1, "void"},
+            {2, "bool"},
+            {3, "char"},
+            {4, "sbyte"},
+            {5, "byte"},
+            {6, "short"},
+            {7, "ushort"},
+            {8, "int"},
+            {9, "uint"},
+            {10, "long"},
+            {11, "ulong"},
+            {12, "float"},
+            {13, "double"},
+            {14, "string"},
+            {22, "TypedReference"},
+            {24, "IntPtr"},
+            {25, "UIntPtr"},
+            {28, "object"}
         };
 
         private static readonly Dictionary<string, ulong> PrimitiveSizes = new()
         {
-            { "Byte", 1 },
-            { "SByte", 1 },
-            { "Boolean", 1 },
-            { "Int16", 2 },
-            { "UInt16", 2 },
-            { "Char", 2 },
-            { "Int32", 4 },
-            { "UInt32", 4 },
-            { "Single", 4 },
-            { "Int64", 8 },
-            { "UInt64", 8 },
-            { "Double", 8 },
-            { "IntPtr", 8 },
-            { "UIntPtr", 8},
+            {"Byte", 1},
+            {"SByte", 1},
+            {"Boolean", 1},
+            {"Int16", 2},
+            {"UInt16", 2},
+            {"Char", 2},
+            {"Int32", 4},
+            {"UInt32", 4},
+            {"Single", 4},
+            {"Int64", 8},
+            {"UInt64", 8},
+            {"Double", 8},
+            {"IntPtr", 8},
+            {"UIntPtr", 8},
         };
 
         private static Dictionary<FieldInfo, VersionAttribute[]> _cachedVersionAttributes = new();
@@ -98,25 +98,25 @@ namespace LibCpp2IL
         {
             if (LibCpp2IlMain.Binary == null || LibCpp2IlMain.TheMetadata == null) return null;
 
-            var types = new List<Il2CppTypeReflectionData>();
+            var types = new Il2CppTypeReflectionData[genericInst.pointerCount];
             var pointers = LibCpp2IlMain.Binary.ReadClassArrayAtVirtualAddress<ulong>(genericInst.pointerStart, (long)genericInst.pointerCount);
             for (uint i = 0; i < genericInst.pointerCount; ++i)
             {
                 var oriType = LibCpp2IlMain.Binary.GetIl2CppTypeFromPointer(pointers[i]);
-                types.Add(GetTypeReflectionData(oriType)!);
+                types[i] = GetTypeReflectionData(oriType)!;
             }
 
-            return types.ToArray();
+            return types;
         }
 
         internal static string GetGenericTypeParamNames(Il2CppMetadata metadata, Il2CppBinary cppAssembly, Il2CppGenericInst genericInst)
         {
-            var typeNames = new List<string>();
+            var typeNames = new string[genericInst.pointerCount];
             var pointers = cppAssembly.ReadClassArrayAtVirtualAddress<ulong>(genericInst.pointerStart, (long)genericInst.pointerCount);
             for (uint i = 0; i < genericInst.pointerCount; ++i)
             {
                 var oriType = cppAssembly.GetIl2CppTypeFromPointer(pointers[i]);
-                typeNames.Add(GetTypeName(metadata, cppAssembly, oriType));
+                typeNames[i] = GetTypeName(metadata, cppAssembly, oriType);
             }
 
             return $"<{string.Join(", ", typeNames)}>";
