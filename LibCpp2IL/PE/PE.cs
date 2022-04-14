@@ -193,7 +193,7 @@ namespace LibCpp2IL.PE
             return functionPointer + peImageBase;
         }
 
-        public override ulong GetRVA(ulong pointer)
+        public override ulong GetRva(ulong pointer)
         {
             return pointer - peImageBase;
         }
