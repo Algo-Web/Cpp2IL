@@ -3,7 +3,7 @@ using System.Text;
 
 namespace LibCpp2IL.MachO
 {
-    public class MachOSegmentCommand
+    public class MachOSegmentCommand : ReadableClass
     {
         public string SegmentName; // 16 bytes
         
@@ -21,9 +21,9 @@ namespace LibCpp2IL.MachO
         
         public MachOSection[] Sections = Array.Empty<MachOSection>();
 
-        public void Read(ClassReadingBinaryReader reader)
+        public override void Read(ClassReadingBinaryReader reader)
         {
-            SegmentName = Encoding.UTF8.GetString(reader.ReadBytes(16)).TrimEnd('\0');
+            SegmentName = Encoding.UTF8.GetString(reader.ReadByteArrayAtRawAddressNoLock(-1, 16)).TrimEnd('\0');
             
             VirtualAddress = reader.ReadNUint();
             VirtualSize = reader.ReadNUint();
@@ -40,8 +40,7 @@ namespace LibCpp2IL.MachO
             Sections = new MachOSection[NumSections];
             for (var i = 0; i < NumSections; i++)
             {
-                Sections[i] = new();
-                Sections[i].Read(reader);
+                Sections[i] = reader.ReadReadableHereNoLock<MachOSection>();
             }
         }
     }

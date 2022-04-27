@@ -2,7 +2,7 @@
 
 namespace LibCpp2IL.MachO
 {
-    public class MachOSection
+    public class MachOSection : ReadableClass
     {
         public string SectionName; // 16 bytes
         public string ContainingSegmentName; // 16 bytes
@@ -21,10 +21,10 @@ namespace LibCpp2IL.MachO
         
         public uint Reserved3; //64-bit only
         
-        public void Read(ClassReadingBinaryReader reader)
+        public override void Read(ClassReadingBinaryReader reader)
         {
-            SectionName = Encoding.UTF8.GetString(reader.ReadBytes(16)).TrimEnd('\0');
-            ContainingSegmentName = Encoding.UTF8.GetString(reader.ReadBytes(16)).TrimEnd('\0');
+            SectionName = Encoding.UTF8.GetString(reader.ReadByteArrayAtRawAddressNoLock(-1, 16)).TrimEnd('\0');
+            ContainingSegmentName = Encoding.UTF8.GetString(reader.ReadByteArrayAtRawAddressNoLock(-1, 16)).TrimEnd('\0');
             
             Address = reader.ReadNUint();
             Size = reader.ReadNUint();
