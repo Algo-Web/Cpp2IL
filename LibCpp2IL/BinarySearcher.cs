@@ -6,6 +6,8 @@ using System.Reflection;
 using System.Text;
 using LibCpp2IL.BinaryStructures;
 using LibCpp2IL.Logging;
+using LibCpp2IL.NintendoSwitch;
+using LibCpp2IL.Wasm;
 
 namespace LibCpp2IL
 {
@@ -77,10 +79,10 @@ namespace LibCpp2IL
         private IEnumerable<uint> FindAllStrings(string str) => FindAllBytes(Encoding.ASCII.GetBytes(str), 1);
 
         // Find 32-bit words
-        private IEnumerable<uint> FindAllDWords(uint word) => FindAllBytes(BitConverter.GetBytes(word), 1);
+        private IEnumerable<uint> FindAllDWords(uint word) => FindAllBytes(BitConverter.GetBytes(word), _binary is WasmFile or NsoFile ? 1 : 4);
 
         // Find 64-bit words
-        private IEnumerable<uint> FindAllQWords(ulong word) => FindAllBytes(BitConverter.GetBytes(word), 1);
+        private IEnumerable<uint> FindAllQWords(ulong word) => FindAllBytes(BitConverter.GetBytes(word), _binary is WasmFile or NsoFile ? 1 : 8);
 
         // Find words for the current binary size
         private IEnumerable<uint> FindAllWords(ulong word)
@@ -364,13 +366,6 @@ namespace LibCpp2IL
                     if (metaReg.numTypes < LibCpp2IlMain.TheMetadata!.typeDefs.Length)
                     {
                         LibLogger.VerboseNewline($"\t\t\tRejecting metadata registration 0x{va:X} because it has {metaReg.numTypes} types, which is less than metadata-file-defined type def count of {LibCpp2IlMain.TheMetadata!.typeDefs.Length}");
-                        continue;
-                    }
-                    
-                    if (metaReg.fieldOffsetsCount != LibCpp2IlMain.TheMetadata!.typeDefs.Length)
-                    {
-                        //If we see any cases of failing to find meta reg and this line is in verbose log, maybe the assumption (num field offsets == num type defs) is wrong.
-                        LibLogger.VerboseNewline($"\t\t\tRejecting metadata registration 0x{va:X} because it has {metaReg.fieldOffsetsCount} field offsets, while metadata file defines {LibCpp2IlMain.TheMetadata!.typeDefs.Length} type defs");
                         continue;
                     }
                     
