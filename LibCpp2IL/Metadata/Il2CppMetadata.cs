@@ -284,6 +284,7 @@ namespace LibCpp2IL.Metadata
             }
 
             LibLogger.VerboseNewline($"OK ({(DateTime.Now - start).TotalMilliseconds} ms)");
+            _hasFinishedInitialRead = true;
         }
 #pragma warning restore 8618
 
