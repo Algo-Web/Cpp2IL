@@ -182,7 +182,7 @@ namespace LibCpp2IL.NintendoSwitch
         {
             LibLogger.Verbose($"\tReading NSO symbol table...");
             
-            var hash = GetDynamicEntry(ElfDynamicType.DT_HASH) ?? throw new("No hash table found in NSO");
+            var hash = GetDynamicEntry(ElfDynamicType.DT_HASH);
 
             if (hash == null)
             {
@@ -194,7 +194,14 @@ namespace LibCpp2IL.NintendoSwitch
             ReadUInt32(); //Ignored
             var symbolCount = ReadUInt32();
 
-            var symTab = GetDynamicEntry(ElfDynamicType.DT_SYMTAB) ?? throw new("No symbol table found in NSO");
+            var symTab = GetDynamicEntry(ElfDynamicType.DT_SYMTAB);
+            
+            if (symTab == null)
+            {
+                LibLogger.WarnNewline("\tNo DT_SYMTAB found in NSO, symbols will not be resolved");
+                return;
+            }
+            
             _symbolTable = ReadReadableArrayAtVirtualAddress<ElfDynamicSymbol64>((ulong) MapVirtualAddressToRaw(symTab.Value), symbolCount);
             
             LibLogger.VerboseNewline($"Got {_symbolTable.Length} symbols");
