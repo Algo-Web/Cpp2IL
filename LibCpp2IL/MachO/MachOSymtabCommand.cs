@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LibCpp2IL.MachO
 {
-    public class MachOSymtabCommand
+    public class MachOSymtabCommand : ReadableClass
     {
         public uint SymbolTableOffset;
         public uint NumSymbols;
@@ -12,7 +12,7 @@ namespace LibCpp2IL.MachO
 
         public MachOSymtabEntry[] Symbols = Array.Empty<MachOSymtabEntry>();
         
-        public void Read(ClassReadingBinaryReader reader)
+        public override void Read(ClassReadingBinaryReader reader)
         {
             SymbolTableOffset = reader.ReadUInt32();
             NumSymbols = reader.ReadUInt32();

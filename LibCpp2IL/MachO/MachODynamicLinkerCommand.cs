@@ -2,7 +2,7 @@
 
 namespace LibCpp2IL.MachO
 {
-    public class MachODynamicLinkerCommand
+    public class MachODynamicLinkerCommand : ReadableClass
     {
         public int RebaseOffset;
         public int RebaseSize;
@@ -17,7 +17,7 @@ namespace LibCpp2IL.MachO
         
         public MachOExportEntry[] Exports = Array.Empty<MachOExportEntry>();
         
-        public void Read(ClassReadingBinaryReader reader)
+        public override void Read(ClassReadingBinaryReader reader)
         {
             RebaseOffset = reader.ReadInt32();
             RebaseSize = reader.ReadInt32();

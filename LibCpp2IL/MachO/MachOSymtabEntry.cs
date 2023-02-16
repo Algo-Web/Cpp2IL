@@ -31,7 +31,7 @@
             Value = reader.ReadNUint();
 
             var returnTo = reader.BaseStream.Position;
-            Name = reader.ReadStringToNull(machOSymtabCommand.StringTableOffset + NameOffset);
+            Name = reader.ReadStringToNullNoLock(machOSymtabCommand.StringTableOffset + NameOffset);
             reader.BaseStream.Position = returnTo;
         }
     }
