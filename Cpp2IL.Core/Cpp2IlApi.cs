@@ -36,7 +36,7 @@ namespace Cpp2IL.Core
         public static UnityVersion GetVersionFromDataUnity3D(Stream fileStream)
             => LibCpp2IlMain.GetVersionFromDataUnity3D(fileStream);
 
-        private static void ConfigureLib(bool allowUserToInputAddresses)
+        public static void ConfigureLib(bool allowUserToInputAddresses)
         {
             //Set this flag from the options
             LibCpp2IlMain.Settings.AllowManualMetadataAndCodeRegInput = allowUserToInputAddresses;
